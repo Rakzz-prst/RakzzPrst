@@ -37,9 +37,25 @@ jobs:
         with:
           gradle-version: '8.9'
 
+            - name: Fix Kotlin dependencies
+        run: |
+          cat > /tmp/force-kotlin.gradle <<'EOF'
+          allprojects {
+              configurations.all {
+                  resolutionStrategy.eachDependency { details ->
+                      if (details.requested.group == "org.jetbrains.kotlin") {
+                          details.useVersion "1.8.22"
+                      }
+                  }
+              }
+          }
+          EOF
+
       - name: Build APK
         run: |
-          gradle -p android-project :app:assembleDebug
+          gradle -p android-project --init-script /tmp/force-kotlin.gradle :app:assembleDebug
+        
+      
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
